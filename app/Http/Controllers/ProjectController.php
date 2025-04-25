@@ -10,7 +10,14 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::where('creator_id', Auth::id())->get();
+        /** @var User $user */
+        $user = Auth::user();
+
+        $createdProjects = Project::where('creator_id', $user->id)->get();
+        $assignedProjects = $user->assignedTasks()->with('project')->get()->pluck('project')->unique('id');
+
+        $projects = $createdProjects->merge($assignedProjects);
+        
         return view('projects.index', compact('projects'));
     }
 

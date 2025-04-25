@@ -10,12 +10,19 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'status', 'priority', 'due_date', 'project_id', 'assigned_to'
+        'title',
+        'description',
+        'status',
+        'priority',
+        'due_date',
+        'project_id',
+        'assigned_to',
+        'created_by'
     ];
 
     public function project()
     {
-        return $this->belongsTo(Project::class)->withDefault(); // Si no tiene proyecto, asigna un valor por defecto
+        return $this->belongsTo(Project::class)->withDefault();
     }
 
     public function assignedUser()
@@ -23,4 +30,8 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function createdUsers()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

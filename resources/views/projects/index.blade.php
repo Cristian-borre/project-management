@@ -18,7 +18,6 @@
             <table class="table table-hover align-middle border rounded overflow-hidden">
                 <thead class="bg-gradient text-white" style="background: linear-gradient(90deg, #0d6efd, #6610f2);">
                     <tr class="text-center">
-                        <th scope="col">#</th>
                         <th scope="col">Nombre</th>
                         <th scope="col">Descripción</th>
                         <th scope="col">Creador</th>
@@ -29,18 +28,19 @@
                 <tbody class="text-center">
                     @foreach($projects as $project)
                         <tr>
-                            <td>{{ $project->id }}</td>
                             <td class="text-start fw-semibold">{{ $project->name }}</td>
                             <td class="text-start text-muted">{{ Str::limit($project->description, 50) }}</td>
                             <td>{{ $project->creator->name }}</td>
                             <td>{{ $project->created_at->format('d/m/Y') }}</td>
                             <td>
-                                <a href="{{ route('projects.show', $project->id) }}" class="btn btn-sm btn-outline-info me-1">
+                                <a href="{{ route('projects.show', $project) }}" class="btn btn-sm btn-outline-info me-1">
                                     Ver
                                 </a>
-                                <a href="{{ route('projects.edit', $project->id) }}" class="btn btn-sm btn-outline-warning">
-                                    Editar
-                                </a>
+                                @if(Auth::id() === $project->creator_id)
+                                    <a href="{{ route('projects.edit', $project) }}" class="btn btn-sm btn-outline-warning">
+                                        Editar
+                                    </a>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

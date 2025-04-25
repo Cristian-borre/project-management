@@ -3,7 +3,6 @@
 @section('content')
     <div class="container-fluid px-4 py-5">
         <div class="row g-4">
-            <!-- Estadísticas rápidas -->
             <div class="col-md-3">
                 <div class="card text-center border-0 shadow-sm rounded-3 p-3">
                     <div class="text-muted">Proyectos Activos</div>
@@ -30,7 +29,6 @@
             </div>
         </div>
 
-        <!-- Gráficos -->
         <div class="row g-4 mt-4">
             <div class="col-md-3">
                 <div class="card border-0 shadow rounded-3" style="max-height: 400px">
@@ -54,7 +52,6 @@
             </div>
         </div>
 
-        <!-- Tareas Próximas a Vencer -->
         <div class="row g-4 mt-4">
             <div class="col-md-12">
                 <div class="card border-0 shadow rounded-3">
@@ -70,8 +67,17 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <strong>{{ $task->title }}</strong><br>
-                                            <small
-                                                class="text-muted">{{ $task->project ? $task->project->name : 'Libre' }}</small>
+                                            <small class="text-muted">{{ $task->project ? $task->project->name : 'Libre' }}</small><br>
+                                            <small class="text-muted">
+                                                Asignada a: 
+                                                <span class="badge bg-secondary">
+                                                    @if ($task->assigned_to)
+                                                        {{ $task->assignedUser->name }}
+                                                    @else
+                                                        {{ $task->createdUsers->name }}
+                                                    @endif
+                                                </span>
+                                            </small>
                                         </div>
                                         <span class="badge bg-warning text-dark">
                                             {{ \Carbon\Carbon::parse($task->due_date)->diffForHumans() }}
@@ -126,7 +132,7 @@
                 options: {
                     plugins: {
                         legend: {
-                            position: 'right', // Aquí movemos la leyenda a la derecha
+                            position: 'right',
                             labels: {
                                 boxWidth: 20,
                                 padding: 15

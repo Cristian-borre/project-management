@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Project;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -13,7 +14,7 @@ class TaskController extends Controller
     public function index()
     {
         $tasks = Task::where('assigned_to', auth()->id())
-            ->orWhereNull('assigned_to')
+            ->orWhere('created_by', auth()->id())
             ->get();
 
         return view('tasks.index', compact('tasks'));
@@ -21,7 +22,10 @@ class TaskController extends Controller
 
     public function create()
     {
-        $projects = Project::all();
+        /** @var User $user */
+        $user = Auth::user();
+
+        $projects = Project::where('creator_id', $user->id)->get();
         $users = User::all();
         return view('tasks.create', compact('projects', 'users'));
     }
@@ -42,6 +46,7 @@ class TaskController extends Controller
             'priority' => $request->priority,
             'project_id' => $request->project_id,
             'assigned_to' => $request->assigned_to,
+            'created_by' => Auth::id(),
         ]);
 
         return redirect()->route('tasks.index')->with('success', 'Tarea creada con éxito.');
@@ -73,5 +78,25 @@ class TaskController extends Controller
         ]);
 
         return redirect()->route('tasks.index')->with('success', 'Tarea actualizada con éxito.');
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:tasks,id',
+            'status' => 'required|in:pending,in_progress,done',
+        ]);
+
+        $task = Task::find($request->id);
+
+        // Verifica que el usuario pueda modificarla (si lo deseas)
+        if (auth()->id() !== $task->assigned_to && auth()->id() !== $task->created_by) {
+            return response()->json(['success' => false], 403);
+        }
+
+        $task->status = $request->status;
+        $task->save();
+
+        return response()->json(['success' => true]);
     }
 }

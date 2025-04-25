@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Models\Task;
 
 class DashboardController extends Controller
 {
@@ -15,26 +16,89 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        /** @var User $user */
         $user = Auth::user();
 
-        // Obtener las estadísticas
-        $activeProjects = $user->createdProjects()->count(); // Proyectos que ha creado el usuario
-        $assignedTasks = $user->assignedTasks()->count(); // Tareas asignadas al usuario
-        $completedTasks = $user->assignedTasks()->where('status', 'done')->count(); // Tareas completadas
-        $pendingTasks = $user->assignedTasks()->where('status', 'todo')->orderBy('due_date')->get(); // Tareas pendientes
+        $createdProjects = $user->createdProjects()->with('tasks')->get();
+        $assignedProjects = $user->assignedTasks()->with('project')->get()->pluck('project')->unique('id');
 
-        // Obtener las tareas próximas a vencer
-        $upcomingTasks = $user->assignedTasks()->where('due_date', '>', now())->orderBy('due_date')->get();
+        $projects = $createdProjects->merge($assignedProjects);
 
-        // Contadores de tareas por estado (Pendientes, En Progreso, Completadas)
-        $todoCount = $user->assignedTasks()->where('status', 'todo')->count();
-        $inProgressCount = $user->assignedTasks()->where('status', 'in_progress')->count();
-        $doneCount = $user->assignedTasks()->where('status', 'done')->count();
+        $activeProjects = $projects->count();
+        $assignedTasks = Task::where(function($query) use ($user) {
+                $query->where('assigned_to', $user->id)
+                    ->orWhere(function($subQuery) use ($user) {
+                        $subQuery->whereNull('assigned_to')
+                                ->where('created_by', $user->id);
+                    });
+            })
+            ->count();
 
-        // Obtener los proyectos y su progreso (esto es un ejemplo y depende de tu implementación)
-        $projects = $user->createdProjects()->withCount('tasks')->get();
+
+        $completedTasks = $projects
+            ->flatMap(function ($project) use ($user) {
+                if ($project->creator_id == $user->id) {
+                    return $project->tasks->where('status', 'done');
+                } else {
+                    return $project->tasks->where('status', 'done')->where('assigned_to', $user->id);
+                }
+            })
+            ->count();
+
+        $pendingTasks = $projects
+            ->flatMap(function ($project) use ($user) {
+                if ($project->creator_id == $user->id) {
+                    return $project->tasks->where('status', 'todo');
+                } else {
+                    return $project->tasks->where('status', 'todo')->where('assigned_to', $user->id)->sortBy('due_date');
+                }
+            });
+
+        $upcomingTasks = Task::where(function($query) use ($user) {
+                $query->where('assigned_to', $user->id)
+                      ->orWhere(function($subQuery) use ($user) {
+                          $subQuery->whereNull('assigned_to')
+                                   ->where('created_by', $user->id);
+                      });
+            })
+            ->where('due_date', '>', now())
+            ->whereIn('status', ['todo', 'in_progress'])
+            ->orderBy('due_date')
+            ->with(['assignedUser', 'createdUsers'])
+            ->get();
+
+        $todoCount = $projects
+            ->flatMap(function ($project) use ($user) {
+                if ($project->creator_id == $user->id) {
+                    return $project->tasks->where('status', 'todo');
+                } else {
+                    return $project->tasks->where('status', 'todo')->where('assigned_to', $user->id);
+                }
+            })
+            ->count();
+
+        $inProgressCount = $projects
+            ->flatMap(function ($project) use ($user) {
+                if ($project->creator_id == $user->id) {
+                    return $project->tasks->where('status', 'in_progress');
+                } else {
+                    return $project->tasks->where('status', 'in_progress')->where('assigned_to', $user->id);
+                }
+            })
+            ->count();
+
+        $doneCount = $projects
+            ->flatMap(function ($project) use ($user) {
+                if ($project->creator_id == $user->id) {
+                    return $project->tasks->where('status', 'done');
+                } else {
+                    return $project->tasks->where('status', 'done')->where('assigned_to', $user->id);
+                }
+            })
+            ->count();
+
         $projectNames = $projects->pluck('name')->map(function ($name) {
-            return Str::limit($name, 10); // limitar a 20 caracteres
+            return Str::limit($name, 10);
         });
         $projectProgress = $projects->map(function ($project) {
             $completedTasks = $project->tasks()->where('status', 'done')->count();

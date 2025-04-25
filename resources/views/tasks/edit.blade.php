@@ -10,20 +10,17 @@
                     @csrf
                     @method('PUT')
 
-                    <!-- Título -->
                     <div class="mb-3">
                         <label for="title" class="form-label fw-semibold">Título</label>
                         <input type="text" class="form-control" id="title" name="title" value="{{ $task->title }}"
                             required>
                     </div>
 
-                    <!-- Descripción -->
                     <div class="mb-3">
                         <label for="description" class="form-label fw-semibold">Descripción</label>
                         <textarea class="form-control" id="description" name="description" rows="4">{{ $task->description }}</textarea>
                     </div>
 
-                    <!-- Fecha de vencimiento -->
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="due_date" class="form-label">Fecha de Vencimiento</label>
@@ -31,7 +28,6 @@
                                 value="{{ $task->due_date }}">
                         </div>
 
-                        <!-- Prioridad -->
                         <div class="col-md-6 mb-3">
                             <label for="priority" class="form-label">Prioridad</label>
                             <select class="form-control" id="priority" name="priority">
@@ -43,7 +39,6 @@
                     </div>
 
                     <div class="row">
-                        <!-- Estado -->
                         <div class="col-md-6 mb-3">
                             <label for="status" class="form-label">Estado</label>
                             <select class="form-control" id="status" name="status">
@@ -54,7 +49,6 @@
                             </select>
                         </div>
                         
-                        <!-- Asignado a -->
                         <div class="col-md-6 mb-4">
                             <label for="assigned_to" class="form-label">Asignado a</label>
                             <select class="form-control" id="assigned_to" name="assigned_to">
@@ -67,7 +61,6 @@
                         </div>
                     </div>
 
-                    <!-- Proyecto -->
                     <div class="mb-3">
                         <label for="project_id" class="form-label">Proyecto</label>
                         <select class="form-control" id="project_id" name="project_id">
@@ -82,7 +75,6 @@
                     </div>
 
 
-                    <!-- Botones -->
                     <div class="d-flex justify-content-end">
                         <a href="{{ route('tasks.index') }}" class="btn btn-outline-secondary me-2">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
