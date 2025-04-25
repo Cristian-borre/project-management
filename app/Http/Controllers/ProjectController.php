@@ -37,7 +37,8 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        return view('projects.show', compact('project'));
+        $tasks = $project->tasks()->with('assignedUser')->get();
+        return view('projects.show', compact('project', 'tasks'));
     }
 
     public function edit(Project $project)
