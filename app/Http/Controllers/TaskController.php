@@ -15,6 +15,7 @@ class TaskController extends Controller
     {
         $tasks = Task::where('assigned_to', auth()->id())
             ->orWhere('created_by', auth()->id())
+            ->with(['assignedUser', 'createdUsers'])
             ->get();
 
         return view('tasks.index', compact('tasks'));
@@ -84,14 +85,19 @@ class TaskController extends Controller
     {
         $request->validate([
             'id' => 'required|exists:tasks,id',
-            'status' => 'required|in:pending,in_progress,done',
+            'status' => 'required|in:todo,in_progress,done',
         ]);
 
         $task = Task::find($request->id);
 
-        // Verifica que el usuario pueda modificarla (si lo deseas)
-        if (auth()->id() !== $task->assigned_to && auth()->id() !== $task->created_by) {
-            return response()->json(['success' => false], 403);
+        $validTransitions = [
+            'todo' => ['in_progress'],
+            'in_progress' => ['done'],
+            'done' => [],
+        ];
+
+        if (!in_array($request->status, $validTransitions[$task->status])) {
+            return response()->json(['success' => false, 'error' => 'Transición no permitida'], 403);
         }
 
         $task->status = $request->status;

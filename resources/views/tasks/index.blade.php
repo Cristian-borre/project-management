@@ -21,7 +21,17 @@
                                 <div class="card-body p-2">
                                     <h6 class="fw-semibold">{{ $task->title }}</h6>
                                     <small class="text-muted">{{ Str::limit($task->description, 60) }}</small><br>
-                                    <small class="text-muted">Límite: {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d/m/Y') : 'N/A' }}</small>
+                                    <small class="text-muted">Límite: {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d/m/Y') : 'N/A' }}</small><br>
+                                    <small class="text-muted">
+                                        Asignada a: 
+                                        <span class="badge bg-secondary">
+                                            @if ($task->assigned_to)
+                                                {{ $task->assignedUser->name }}
+                                            @else
+                                                {{ $task->createdUsers->name }}
+                                            @endif
+                                        </span>
+                                    </small>
                                     <div class="mt-2 text-end">
                                         <a href="{{ route('tasks.edit', $task) }}" class="btn btn-sm btn-outline-primary">Editar</a>
                                     </div>
@@ -38,6 +48,12 @@
 <script>
     let dragged;
 
+    const validTransitions = {
+        todo: ['in_progress'],
+        in_progress: ['done'],
+        done: []
+    };
+
     document.querySelectorAll('.task-card').forEach(card => {
         card.addEventListener('dragstart', (e) => {
             dragged = card;
@@ -52,10 +68,16 @@
             e.preventDefault();
             const taskId = dragged.dataset.id;
             const newStatus = column.dataset.status;
+            const currentStatus = dragged.closest('.kanban-column').dataset.status;
+
+            if (!validTransitions[currentStatus].includes(newStatus)) {
+                alert('No puedes mover esta tarea directamente a este estado.');
+                return;
+            }
 
             column.appendChild(dragged);
 
-            fetch('/tasks/update-status', {
+            fetch("{{ route('tasks.update-status') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

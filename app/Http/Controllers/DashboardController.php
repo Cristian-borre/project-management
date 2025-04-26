@@ -25,6 +25,7 @@ class DashboardController extends Controller
         $projects = $createdProjects->merge($assignedProjects);
 
         $activeProjects = $projects->count();
+
         $assignedTasks = Task::where(function($query) use ($user) {
                 $query->where('assigned_to', $user->id)
                     ->orWhere(function($subQuery) use ($user) {
@@ -33,7 +34,6 @@ class DashboardController extends Controller
                     });
             })
             ->count();
-
 
         $completedTasks = $projects
             ->flatMap(function ($project) use ($user) {
@@ -62,6 +62,7 @@ class DashboardController extends Controller
                       });
             })
             ->where('due_date', '>', now())
+            ->where('due_date', '<=', now()->addWeek())
             ->whereIn('status', ['todo', 'in_progress'])
             ->orderBy('due_date')
             ->with(['assignedUser', 'createdUsers'])
